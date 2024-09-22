@@ -11,6 +11,14 @@ def proc_data(df):
     df['Embarked'] = pd.Categorical(df.Embarked)
     df['Sex'] = pd.Categorical(df.Sex)
 
+
+def _side_score(side, y):
+    tot = side.sum()
+    if tot <= 1:
+        return 0
+    return y[side].std() * tot
+
+
 class RandomForest:
     def __init__(self, filepath):
         self.filepath = filepath
@@ -25,4 +33,14 @@ class RandomForest:
         self.train_data = proc_data(self.train_data)
         self.test_data = proc_data(self.test_data)
 
+    def score(self, col, y, split):
+        lhs = col <= split
+        return (_side_score(lhs, y) + _side_score(~lhs, y))/len(y)
+
+    def min_col(self, df, nm):
+        col, y = df[nm], df[dep]
+        unq = col.dropna().unique()
+        scores = np.array([score(col, y, o) for o in unq if not np.isnan(o)])
+        idx = scores.argmin()
+        return unq[idx], scores[idx]
 
