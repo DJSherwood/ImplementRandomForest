@@ -24,10 +24,13 @@ class RandomForest:
         self.filepath = filepath
         self.train_data = None
         self.test_data = None
+        self.tree = None
+        self.cols = None
 
     def load_data(self, train_file, test_file):
         self.train_data = pd.read_csv(filepath_or_buffer=self.filepath + '/' + train_file)
         self.test_data = pd.read_csv(filepath_or_buffer=self.filepath + '/' + test_file)
+        self.cols = self.train_data.columns
 
     def process_data(self):
         self.train_data = proc_data(self.train_data)
@@ -40,7 +43,11 @@ class RandomForest:
     def min_col(self, df, nm):
         col, y = df[nm], df[dep]
         unq = col.dropna().unique()
-        scores = np.array([score(col, y, o) for o in unq if not np.isnan(o)])
+        scores = np.array([self.score(col, y, o) for o in unq if not np.isnan(o)])
         idx = scores.argmin()
         return unq[idx], scores[idx]
+
+    def create_tree(self, cols):
+        self.tree = {i : self.min_col(category, i) for i in cols}
+
 
