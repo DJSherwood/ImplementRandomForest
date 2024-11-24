@@ -57,4 +57,6 @@ class RandomForest:
         ]
 
     def create_tree(self, cols):
+        for i in self.column_subsets:
+
         self.tree = {i : min_col(df=self.subset_indicies, x_name=i) for i in cols}
