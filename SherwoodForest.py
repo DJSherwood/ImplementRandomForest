@@ -19,44 +19,59 @@ def _side_score(side, y):
         return 0
     return y[side].std() * tot
 
-def min_col(self, df, nm):
-    col, y = df[nm], df[dep]
+def min_col(df, column, response):
+    col, y = df.iloc[:, column], response
     unq = col.dropna().unique()
     scores = np.array([score(col, y, o) for o in unq if not np.isnan(o)])
     idx = scores.argmin()
     return unq[idx], scores[idx]
 
-def score(self, col, split):
+def score(col, y, split):
     lhs = col <= split
-    return (_side_score(lhs, y) + _side_score(~lhs, y)) / len(y)
+    return (_side_score(side=lhs, y=y) + _side_score(side=~lhs, y=y)) / len(y)
 
-class RandomForest:
-    def __init__(self, filepath):
+class SherwoodForest:
+    def __init__(self, filepath, num_trees=10, num_rows=500):
         self.filepath = filepath
         self.train_data = None
         self.test_data = None
         self.y = None
-        self.num_trees = 10
-        self.num_rows = 500
-        self.tree = None
+        self.num_trees = num_trees
+        self.num_rows = num_rows
+        self.tree = []
         self.column_subsets = []
 
-    def load_data(self, train_file, test_file, y_name):
+    def load_data(self, train_file, test_file, response):
         self.train_data = pd.read_csv(filepath_or_buffer=self.filepath + '/' + train_file)
         self.test_data = pd.read_csv(filepath_or_buffer=self.filepath + '/' + test_file)
+        self.response = self.train_data[response]
+        self.train_data = self.train_data.drop(response, axis=1)
 
     def process_data(self):
         self.train_data = proc_data(self.train_data)
         self.test_data = proc_data(self.test_data)
 
     def create_starting_nodes(self):
+        # need to just separate the response completely
         self.column_subsets = [
-            [num for num in [
+            [num for num in set([
                 random.randint(0, len(self.train_data.columns)-1) for _ in range(random.randint(2,len(self.train_data.columns)))
-            ] if num != 1] for _ in range(self.num_trees)
+            ])
+             ] for _ in range(self.num_trees)
         ]
 
-    def create_tree(self, cols):
-        for i in self.column_subsets:
+    def create_tree(self):
+        for cols in self.column_subsets:
+            self.tree.append({c : min_col(df=self.train_data, column=c, response=self.response) for c in cols})
 
-        self.tree = {i : min_col(df=self.subset_indicies, x_name=i) for i in cols}
+if __name__ == "__main__" :
+    # intialize
+    sf = SherwoodForest(filepath="/home/gigan/Python_Projects/Kaggle_Projs/titanic")
+    # load data
+    sf.load_data("train.csv","test.csv", 'Survived')
+    # process data
+    sf.process_data()
+    # create node
+    sf.create_starting_nodes()
+    # create base of tree
+    sf.create_tree()
