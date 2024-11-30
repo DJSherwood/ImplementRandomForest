@@ -1,10 +1,10 @@
-# some of this code is from Jermey Howard's notebook.
-# https://www.kaggle.com/code/jhoward/how-random-forests-really-work/
+
 import numpy as np
 import pandas as pd
 import random
 
-# this is  at static method which exists outside of the class definition
+# These static functions are from Jeremy Howard's excellent notebook:
+# https://www.kaggle.com/code/jhoward/how-random-forests-really-work/
 def proc_data(df):
     df['Fare'] = df.Fare.fillna(0)
     df.fillna(df.mode().iloc[0], inplace=True)
@@ -25,22 +25,29 @@ def score(x, y, split):
     return (_side_score(lhs, y) + _side_score(~lhs, y)) / len(y)
 
 def min_col(df,predictor, response):
+    # get the x and the y
     x, y = df[predictor], df[response]
+    # find unique values for the x
     unique_column = x.dropna().unique()
+    # calculate the score for each unique value of x
     scores = np.array([
         score(x, y, unique_value) for unique_value in unique_column if not np.isnan(unique_value)
     ])
+    # find the lowest scoring index
     idx = scores.argmin()
+    # return the value corresponding to that index
     return unique_column[idx], scores[idx]
 
+# this class is my addition
 class SherwoodForest:
-    def __init__(self, filepath, num_trees=10, num_rows=500):
+    # this method runs at initialization of the object
+    def __init__(self, filepath, num_trees=10, frac_rows=0.7):
         self.filepath = filepath
         self.train_data = None
         self.test_data = None
         self.y = None
         self.num_trees = num_trees
-        self.num_rows = num_rows
+        self.frac_rows = frac_rows
         self.tree = []
         self.column_subsets = []
         self.predictors = []
@@ -67,9 +74,12 @@ class SherwoodForest:
             random.sample(self.predictors, random.randint(1, len(self.predictors))) for _ in range(self.num_trees)
         ]
 
+# need a way to give the tree depth
+# some sort of recursive function that adds a sub-dictionary based on the higher level of the dictionary
+# or maybe just add elements of a list...hmmm
     def create_tree(self):
         for cols in self.column_subsets:
-            self.tree.append({c : min_col(df=self.train_data.sample(frac=0.7), predictor=c, response=self.response) for c in cols})
+            self.tree.append({c : min_col(df=self.train_data.sample(frac=self.frac_rows), predictor=c, response=self.response) for c in cols})
 
 if __name__ == "__main__" :
     # intialize
