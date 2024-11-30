@@ -1,7 +1,8 @@
-
+import censoring
+import random
 import numpy as np
 import pandas as pd
-import random
+
 
 # These static functions are from Jeremy Howard's excellent notebook:
 # https://www.kaggle.com/code/jhoward/how-random-forests-really-work/
@@ -83,7 +84,7 @@ class SherwoodForest:
 
 if __name__ == "__main__" :
     # intialize
-    sf = SherwoodForest(filepath="/home/gigan/Python_Projects/Kaggle_Projs/titanic")
+    sf = SherwoodForest(filepath=censoring.data_path)
     # load data
     sf.load_data("train.csv",
                  "test.csv",
